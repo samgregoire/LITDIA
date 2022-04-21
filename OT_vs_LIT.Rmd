@@ -1,0 +1,686 @@
+---
+title: "OT_vs_LIT"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cerulean
+    highlight: kate
+    fig_width: 9
+    fig_height : 7
+    df_print: paged
+    number_sections: true
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+# Load packages
+
+```{r}
+library("tidyverse")
+library("UpSetR")
+library("patchwork")
+library("ggpubr")
+```
+
+# Upset plot analysis
+
+## Load files
+
+```{r, echo = FALSE}
+path <- ("C://Users/samgr/OneDrive - UCL/Documents/Internship/")
+```
+
+
+```{r}
+DDA_1 <- read_tsv(paste0(path, "DDA_1ng.txt"))
+DDA_5 <- read_tsv(paste0(path, "DDA_5ng.txt"))
+DDA_10 <- read_tsv(paste0(path, "DDA_10ng.txt"))
+DDA_100 <- read_tsv(paste0(path, "DDA_100ng.txt"))
+
+DIA_1 <- 
+  read.csv2(paste0(path, "20220420_142723_1ng_40SPD_LIT_turbo_8ms_1CV_Report.csv"))
+DIA_5 <- 
+  read.csv2(paste0(path, "20220420_142943_5ng_LIT_turbo_8ms_Report.csv"))
+DIA_10 <- 
+  read.csv2(paste0(path, "20220420_142500_CV-Turbo-8ms-LIT-10ng_Report.csv"))
+DIA_100 <- 
+  read.csv2(paste0(path, "20220420_143815_40SPD_whisper100_LITDIA_Turbo_8ms_1cv_100ng_Report.csv"))
+
+```
+
+## Filtering
+
+### Filter potential contaminants and reverse
+
+DDA 1ng
+```{r}
+dim(DDA_1)[1]
+temp <- DDA_1 %>% 
+  filter(is.na(DDA_1$Reverse))
+DDA_1 <- temp %>% filter(is.na(temp$`Potential contaminant`))
+dim(DDA_1)[1]
+```
+
+DDA 5ng
+```{r}
+dim(DDA_5)[1]
+temp <- DDA_5 %>% 
+  filter(is.na(DDA_5$Reverse))
+DDA_5 <- temp %>% filter(is.na(temp$`Potential contaminant`))
+dim(DDA_5)[1]
+```
+
+DDA 10ng
+```{r}
+dim(DDA_10)[1]
+temp <- DDA_10 %>% 
+  filter(is.na(DDA_10$Reverse))
+DDA_10 <- temp %>% filter(is.na(temp$`Potential contaminant`))
+dim(DDA_10)[1]
+```
+
+DDA 100ng
+```{r}
+dim(DDA_100)[1]
+temp <- DDA_100 %>% 
+  filter(is.na(DDA_100$Reverse))
+DDA_100 <- temp %>% filter(is.na(temp$`Potential contaminant`))
+dim(DDA_100)[1]
+```
+
+### Keep peptides found in 2 of the 4 replicates
+
+#### Extract peptide sequences found in specific replicate
+
+
+DDA 1ng
+```{r}
+table(DDA_1$`Raw file`)
+
+DDA_1_1_pep <- DDA_1 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_1ng_Turbo_1CV_8ms_S01") %>% 
+  pull(Sequence)
+
+DDA_1_2_pep <- DDA_1 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_1ng_Turbo_1CV_8ms_S02") %>% 
+  pull(Sequence)
+
+DDA_1_3_pep <- DDA_1 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_1ng_Turbo_1CV_8ms_S03") %>% 
+  pull(Sequence)
+
+DDA_1_4_pep <- DDA_1 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_1ng_Turbo_1CV_8ms_S04") %>% 
+  pull(Sequence)
+```
+
+
+DDA 5ng
+```{r}
+table(DDA_5$`Raw file`)
+
+DDA_5_1_pep <- DDA_5 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_5ng_Turbo_1CV_8ms_S01") %>% 
+  pull(Sequence)
+
+DDA_5_2_pep <- DDA_5 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_5ng_Turbo_1CV_8ms_S02") %>% 
+  pull(Sequence)
+
+DDA_5_3_pep <- DDA_5 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_5ng_Turbo_1CV_8ms_S03") %>% 
+  pull(Sequence)
+
+DDA_5_4_pep <- DDA_5 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_5ng_Turbo_1CV_8ms_S04") %>% 
+  pull(Sequence)
+```
+
+
+DDA 10ng
+```{r}
+table(DDA_10$`Raw file`)
+
+DDA_10_1_pep <- DDA_10 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_10ng_Turbo_1CV_8ms_S01") %>% 
+  pull(Sequence)
+
+DDA_10_2_pep <- DDA_10 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_10ng_Turbo_1CV_8ms_S02") %>% 
+  pull(Sequence)
+
+DDA_10_3_pep <- DDA_10 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_10ng_Turbo_1CV_8ms_S03") %>% 
+  pull(Sequence)
+
+DDA_10_4_pep <- DDA_10 %>% 
+  filter(`Raw file` ==
+           "20220414_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_10ng_Turbo_1CV_8ms_S04") %>% 
+  pull(Sequence)
+```
+
+
+DDA 100ng
+```{r}
+table(DDA_100$`Raw file`)
+
+DDA_100_1_pep <- DDA_100 %>% 
+  filter(`Raw file` ==
+           "20220413_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_100ng_Turbo_1CV_8ms_S01") %>% 
+  pull(Sequence)
+
+DDA_100_2_pep <- DDA_100 %>% 
+  filter(`Raw file` ==
+           "20220413_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_100ng_Turbo_1CV_8ms_S02") %>% 
+  pull(Sequence)
+
+DDA_100_3_pep <- DDA_100 %>% 
+  filter(`Raw file` ==
+           "20220413_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_100ng_Turbo_1CV_8ms_S03") %>% 
+  pull(Sequence)
+
+DDA_100_4_pep <- DDA_100 %>% 
+  filter(`Raw file` ==
+           "20220413_HB_Evo_Whisper100_40SPD_LITDDA_HeLa_100ng_Turbo_1CV_8ms_S04") %>% 
+  pull(Sequence)
+```
+
+DIA 1ng
+```{r}
+DIA_1 <- DIA_1 %>% 
+  filter(EG.IsImputed == "False")
+
+table(DIA_1$R.FileName)
+
+DIA_1_1_pep <- DIA_1 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_1ng_1CV45_LITDIA_Turbo_8ms_s01") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_1_2_pep <- DIA_1 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_1ng_1CV45_LITDIA_Turbo_8ms_s02") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_1_3_pep <- DIA_1 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_1ng_1CV45_LITDIA_Turbo_8ms_s03") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_1_4_pep <- DIA_1 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_1ng_1CV45_LITDIA_Turbo_8ms_s04") %>% 
+  pull(PEP.StrippedSequence)
+```
+
+
+DIA 5ng
+```{r}
+DIA_5 <- DIA_5 %>% 
+  filter(EG.IsImputed == "False")
+
+table(DIA_5$R.FileName)
+
+DIA_5_1_pep <- DIA_5 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_5ng_1CV45_LITDIA_Turbo_8ms_s01") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_5_2_pep <- DIA_5 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_5ng_1CV45_LITDIA_Turbo_8ms_s02") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_5_3_pep <- DIA_5 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_5ng_1CV45_LITDIA_Turbo_8ms_s03") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_5_4_pep <- DIA_5 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_5ng_1CV45_LITDIA_Turbo_8ms_s04") %>% 
+  pull(PEP.StrippedSequence)
+```
+
+DIA 10ng
+```{r}
+
+DIA_10 <- DIA_10 %>% 
+  filter(EG.IsImputed == "False")
+
+table(DIA_10$R.FileName)
+
+DIA_10_1_pep <- DIA_10 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_10ng_1CV45_LITDIA_Turbo_8ms_s01") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_10_2_pep <- DIA_10 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_10ng_1CV45_LITDIA_Turbo_8ms_s02") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_10_3_pep <- DIA_10 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_10ng_1CV45_LITDIA_Turbo_8ms_s03") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_10_4_pep <- DIA_10 %>% 
+  filter(R.FileName ==
+           "20220221_EV_Evo_Whisper100_40SPD_HeLa_10ng_1CV45_LITDIA_Turbo_8ms_s04") %>% 
+  pull(PEP.StrippedSequence)
+```
+
+DIA 100ng
+```{r}
+
+DIA_100 <- DIA_100 %>% 
+  filter(EG.IsImputed == "False")
+
+table(DIA_100$R.FileName)
+
+DIA_100_1_pep <- DIA_100 %>% 
+  filter(R.FileName ==
+           "20220412_HB_Evo_Whisper100_40SPD_LITDIA_HeLa_100ng_Turbo_1CV_8ms_S01") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_100_2_pep <- DIA_100 %>% 
+  filter(R.FileName ==
+           "20220412_HB_Evo_Whisper100_40SPD_LITDIA_HeLa_100ng_Turbo_1CV_8ms_S02") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_100_3_pep <- DIA_100 %>% 
+  filter(R.FileName ==
+           "20220412_HB_Evo_Whisper100_40SPD_LITDIA_HeLa_100ng_Turbo_1CV_8ms_S03") %>% 
+  pull(PEP.StrippedSequence)
+
+DIA_100_4_pep <- DIA_100 %>% 
+  filter(R.FileName ==
+           "20220412_HB_Evo_Whisper100_40SPD_LITDIA_HeLa_100ng_Turbo_1CV_8ms_S04") %>% 
+  pull(PEP.StrippedSequence)
+```
+
+#### Remove peptides found in only one replicate
+
+DDA 1ng
+```{r}
+DDA_1 <- DDA_1 %>% 
+  mutate(in_1 = Sequence %in% DDA_1_1_pep) %>% 
+  mutate(in_2 = Sequence %in% DDA_1_2_pep) %>% 
+  mutate(in_3 = Sequence %in% DDA_1_3_pep) %>% 
+  mutate(in_4 = Sequence %in% DDA_1_4_pep)
+
+DDA_1_filtered <- DDA_1 %>% 
+  filter(rowSums(DDA_1[, 63:66]) >= 2)
+```
+
+DDA 5ng
+```{r}
+DDA_5 <- DDA_5 %>% 
+  mutate(in_1 = Sequence %in% DDA_5_1_pep) %>% 
+  mutate(in_2 = Sequence %in% DDA_5_2_pep) %>% 
+  mutate(in_3 = Sequence %in% DDA_5_3_pep) %>% 
+  mutate(in_4 = Sequence %in% DDA_5_4_pep)
+
+DDA_5_filtered <- DDA_5 %>% 
+  filter(rowSums(DDA_5[, 63:66]) >= 2)
+```
+
+DDA 10ng
+```{r}
+DDA_10 <- DDA_10 %>% 
+  mutate(in_1 = Sequence %in% DDA_10_1_pep) %>% 
+  mutate(in_2 = Sequence %in% DDA_10_2_pep) %>% 
+  mutate(in_3 = Sequence %in% DDA_10_3_pep) %>% 
+  mutate(in_4 = Sequence %in% DDA_10_4_pep)
+
+DDA_10_filtered <- DDA_10 %>% 
+  filter(rowSums(DDA_10[, 63:66]) >= 2)
+```
+
+DDA 100ng
+```{r}
+DDA_100 <- DDA_100 %>% 
+  mutate(in_1 = Sequence %in% DDA_100_1_pep) %>% 
+  mutate(in_2 = Sequence %in% DDA_100_2_pep) %>% 
+  mutate(in_3 = Sequence %in% DDA_100_3_pep) %>% 
+  mutate(in_4 = Sequence %in% DDA_100_4_pep)
+
+DDA_100_filtered <- DDA_100 %>% 
+  filter(rowSums(DDA_100[, 63:66]) >= 2)
+```
+
+DIA 1ng
+```{r}
+DIA_1 <- DIA_1 %>% 
+  mutate(in_1 = PEP.StrippedSequence %in% DIA_1_1_pep) %>% 
+  mutate(in_2 = PEP.StrippedSequence %in% DIA_1_2_pep) %>% 
+  mutate(in_3 = PEP.StrippedSequence %in% DIA_1_3_pep) %>% 
+  mutate(in_4 = PEP.StrippedSequence %in% DIA_1_4_pep)
+
+DIA_1_filtered <- DIA_1 %>% 
+  filter(rowSums(DIA_1[, 55:58]) >= 2)
+```
+
+DIA 5ng
+```{r}
+DIA_5 <- DIA_5 %>% 
+  mutate(in_1 = PEP.StrippedSequence %in% DIA_5_1_pep) %>% 
+  mutate(in_2 = PEP.StrippedSequence %in% DIA_5_2_pep) %>% 
+  mutate(in_3 = PEP.StrippedSequence %in% DIA_5_3_pep) %>% 
+  mutate(in_4 = PEP.StrippedSequence %in% DIA_5_4_pep)
+
+DIA_5_filtered <- DIA_5 %>% 
+  filter(rowSums(DIA_5[, 55:58]) >= 2)
+```
+
+DIA 10ng
+```{r}
+DIA_10 <- DIA_10 %>% 
+  mutate(in_1 = PEP.StrippedSequence %in% DIA_10_1_pep) %>% 
+  mutate(in_2 = PEP.StrippedSequence %in% DIA_10_2_pep) %>% 
+  mutate(in_3 = PEP.StrippedSequence %in% DIA_10_3_pep) %>% 
+  mutate(in_4 = PEP.StrippedSequence %in% DIA_10_4_pep)
+
+DIA_10_filtered <- DIA_10 %>% 
+  filter(rowSums(DIA_10[, 55:58]) >= 2)
+```
+
+DIA 100ng
+```{r}
+DIA_100 <- DIA_100 %>% 
+  mutate(in_1 = PEP.StrippedSequence %in% DIA_100_1_pep) %>% 
+  mutate(in_2 = PEP.StrippedSequence %in% DIA_100_2_pep) %>% 
+  mutate(in_3 = PEP.StrippedSequence %in% DIA_100_3_pep) %>% 
+  mutate(in_4 = PEP.StrippedSequence %in% DIA_100_4_pep)
+
+DIA_100_filtered <- DIA_100 %>% 
+  filter(rowSums(DIA_100[, 55:58]) >= 2)
+```
+
+## UpSet plot
+
+```{r}
+pep_list <- 
+  list('DDA 1ng' = unique(DDA_1_filtered$Sequence),
+       'DDA 5ng' = unique(DDA_5_filtered$Sequence),
+       'DDA 10ng' = unique(DDA_10_filtered$Sequence),
+       'DDA 100ng' = unique(DDA_100_filtered$Sequence),
+       'DIA 1ng' = unique(DIA_1_filtered$PEP.StrippedSequence),
+       'DIA 5ng' = unique(DIA_5_filtered$PEP.StrippedSequence),
+       'DIA 10ng' = unique(DIA_10_filtered$PEP.StrippedSequence),
+       'DIA 100ng' = unique(DIA_100_filtered$PEP.StrippedSequence))
+
+palette <- c("pink3", "pink2", "pink1", "pink",
+             "steelblue", "steelblue3", "steelblue2", "steelblue1")
+
+upset(fromList(pep_list),
+      sets = c('DIA 100ng', 'DIA 10ng', 'DIA 5ng', 'DIA 1ng',
+               'DDA 100ng', 'DDA 10ng', 'DDA 5ng', 'DDA 1ng'),
+      order.by = "freq", 
+      keep.order = TRUE,
+      set_size.show = TRUE, 
+      sets.bar.color = palette,
+      mainbar.y.label = "Number of identified peptides",
+      nsets = 8,
+      text.scale = 1.1)
+```
+
+# CV
+
+## Load dataset
+
+LITDIA turbo
+```{r}
+
+turbo_1 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_LITDIA_turbo_1ng.tsv"),
+           sep = "\t")
+turbo_5 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_LITDIA_turbo_5ng.tsv"),
+           sep = "\t")
+turbo_10 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_LITDIA_turbo_10ng.tsv"),
+           sep = "\t")
+turbo_100 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_LITDIA_turbo_100ng.tsv"),
+           sep = "\t")
+
+```
+
+LITDIA normal
+```{r}
+normal_1 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_LITDIA_normal_1ng.tsv"),
+           sep = "\t")
+normal_5 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_LITDIA_normal_5ng.tsv"),
+           sep = "\t")
+normal_10 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_LITDIA_normal_10ng.tsv"),
+           sep = "\t")
+normal_100 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_LITDIA_normal_100ng.tsv"),
+           sep = "\t")
+```
+
+
+OT 7.5k
+```{r}
+OT_7.5k_1 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_OT_7.5k_1ng.tsv"),
+            sep = "\t")
+OT_7.5k_5 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_OT_7.5k_5ng.tsv"),
+           sep = "\t")
+OT_7.5k_10 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_OT_7.5k_10ng.tsv"),
+           sep = "\t")
+OT_7.5k_100 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_OT_7.5k_100ng.tsv"),
+           sep = "\t")
+```
+
+OT 15k
+```{r}
+OT_15k_1 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_OT_15k_1ng.tsv"),
+           sep = "\t")
+OT_15k_5 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_OT_15k_5ng.tsv"),
+           sep = "\t")
+OT_15k_10 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_OT_15k_10_ng.tsv"),
+           sep = "\t")
+OT_15k_100 <- 
+  read.csv2(paste0(path, "CVs/Peptide_CVs_OT_15k_100ng.tsv"),
+           sep = "\t")
+```
+
+## join table
+
+```{r}
+colnames(turbo_1) <- colnames(turbo_5) <-  colnames(turbo_10) <- colnames(turbo_100) <- 
+  colnames(normal_1) <- colnames(normal_5) <- colnames(normal_10) <- colnames(normal_100) <- 
+  colnames(OT_7.5k_1) <- colnames(OT_7.5k_5) <- colnames(OT_7.5k_10) <- colnames(OT_7.5k_100) <-
+  colnames(OT_15k_1) <- colnames(OT_15k_5) <- colnames(OT_15k_10) <- colnames(OT_15k_100) <- "CV"
+```
+
+
+LITDIA
+```{r}
+turbo_1$ng <- 1
+turbo_5$ng <- 5
+turbo_10$ng <- 10
+turbo_100$ng <- 100
+
+turbo <- rbind(turbo_1, turbo_5, turbo_10, turbo_100)
+
+turbo$method <- "LITDIA_turbo"
+```
+
+Normal
+```{r}
+normal_1$ng <- 1
+normal_5$ng <- 5
+normal_10$ng <- 10
+normal_100$ng <- 100
+
+normal <- rbind(normal_1, normal_5, normal_10, normal_100)
+
+normal$method <- "LITDIA_normal"
+```
+
+OT 7.5k
+```{r}
+OT_7.5k_1$ng <- 1
+OT_7.5k_5$ng <- 5
+OT_7.5k_10$ng <- 10
+OT_7.5k_100$ng <- 100
+
+OT_7.5k <- rbind(OT_7.5k_1, OT_7.5k_5, OT_7.5k_10, OT_7.5k_100)
+
+OT_7.5k$method <- "OT_7.5k"
+```
+
+OT 15k
+```{r}
+OT_15k_1$ng <- 1
+OT_15k_5$ng <- 5
+OT_15k_10$ng <- 10
+OT_15k_100$ng <- 100
+
+OT_15k <- rbind(OT_15k_1, OT_15k_5, OT_15k_10, OT_15k_100)
+
+OT_15k$method <- "OT_15k"
+```
+
+## boxplot
+
+```{r}
+teera_palette <- c(rep(c("#C9D7F0", "#7F9FDB", "#527DCE", "#ADC2E8"),2),
+                   rep(c("#EEB9CF", "#DF7FA7","#D35087",  "#EAACC6"),2))
+
+combined <- rbind(turbo, normal, OT_15k, OT_7.5k)
+combined$condition <- paste(combined$method, combined$ng, sep = "_")
+combined$method <- factor(combined$method, 
+                          levels = c("LITDIA_turbo", "LITDIA_normal", 
+                                     "OT_7.5k", "OT_15k"))
+
+combined %>% 
+  ggplot(aes(x = as.factor(ng), y = CV, fill = as.factor(condition)))+
+  geom_boxplot(outlier.size = 0.7)+
+  theme_bw()+
+  scale_fill_manual(values = teera_palette)+
+  scale_y_log10(breaks = c(1, 10, 20, 100),
+                limits = c(0.2, 195))+
+  geom_hline(yintercept = 20,
+             linetype = "dashed")+
+  labs(x = "Protein Amount (ng)",
+       y = "CV (%)",
+       title = "CV Distribution")+
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))+
+  facet_wrap(~method, labeller = labeller(method = 
+    c("LITDIA_turbo" = "LITDIA Turbo",
+      "LITDIA_normal" = "LITDIA Normal",
+      "OT_15k" = "OT 15k",
+      "OT_7.5k" = "OT 7.5k")))
+```
+
+```{r, include=FALSE}
+DIA_1_intensity <- DIA_1_filtered %>% 
+  group_by(PEP.StrippedSequence) %>% 
+  summarise(mean_quantity = mean(FG.Quantity))
+
+DDA_1_intensity <- DDA_1_filtered %>% 
+  group_by(Sequence) %>% 
+  summarise(mean_intensity = mean(Intensity))
+
+join <- inner_join(DIA_1_intensity, 
+           DDA_1_intensity, 
+           by = c("PEP.StrippedSequence" = "Sequence"))
+
+ggscatter(data = join,
+          x = "mean_quantity",
+          y = "mean_intensity",
+          add = "reg.line",
+          add.params = list(color = "red"), 
+          color = "grey25")+
+  stat_cor(method = "pearson",
+           aes(label = ..r.label..),
+           r.digits = 3, color = "red")+
+  scale_x_log10()+
+  scale_y_log10()+
+  labs(x = "DIA Abundance (log10)",
+       y = "DDA Abundance (log10)")
+```
+
+```{r, include=FALSE}
+DIA_10_intensity <- DIA_10_filtered %>% 
+  group_by(PEP.StrippedSequence) %>% 
+  summarise(mean_quantity = mean(FG.Quantity))
+
+DDA_10_intensity <- DDA_10_filtered %>% 
+  group_by(Sequence) %>% 
+  summarise(mean_intensity = mean(Intensity))
+
+join <- inner_join(DIA_10_intensity, 
+           DDA_10_intensity, 
+           by = c("PEP.StrippedSequence" = "Sequence"))
+
+ggscatter(data = join,
+          x = "mean_quantity",
+          y = "mean_intensity",
+          add = "reg.line",
+          add.params = list(color = "red"), 
+          color = "grey25")+
+  stat_cor(method = "pearson",
+           aes(label = ..r.label..),
+           r.digits = 3, color = "red")+
+  scale_x_log10()+
+  scale_y_log10()+
+  labs(x = "DIA Abundance (log10)",
+       y = "DDA Abundance (log10)")
+```
+```{r, include=FALSE}
+DIA_100_intensity <- DIA_100_filtered %>% 
+  group_by(PEP.StrippedSequence) %>% 
+  summarise(mean_quantity = mean(FG.Quantity))
+
+DDA_100_intensity <- DDA_100_filtered %>% 
+  group_by(Sequence) %>% 
+  summarise(mean_intensity = mean(Intensity))
+
+join <- inner_join(DIA_100_intensity, 
+           DDA_100_intensity, 
+           by = c("PEP.StrippedSequence" = "Sequence"))
+
+ggscatter(data = join,
+          x = "mean_quantity",
+          y = "mean_intensity",
+          add = "reg.line",
+          add.params = list(color = "red"), 
+          color = "grey25")+
+  stat_cor(method = "pearson",
+           aes(label = ..r.label..),
+           r.digits = 3, color = "red")+
+  scale_x_log10()+
+  scale_y_log10()+
+  labs(x = "DIA Abundance (log10)",
+       y = "DDA Abundance (log10)")
+```
